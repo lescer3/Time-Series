@@ -1,0 +1,710 @@
+---
+title: "Untitled"
+author: "Leslie Cervantes"
+date: "2025-05-22"
+output: pdf_document
+---
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(MASS)
+library(knitr)
+data <- read.csv('/Users/lezelly/Desktop/Electric_Production.csv')
+data_ts <- ts(data$IPG2211A2N, start = c(1985, 1), frequency = 12)
+plot(data_ts)
+```
+
+```{r}
+t = 1:length(data_ts)
+bcTransform = boxcox(data_ts ~ t, plotit = TRUE)
+lambda = bcTransform$x[which(bcTransform$y == max(bcTransform$y))]
+data.bc = (1/lambda)*(data_ts^lambda-1)
+plot(data.bc)
+#paste0("Lambda: ", lambda)
+```
+
+```{r}
+op <- par(mfrow = c(1,2))
+acf(electricity.bc, lag.max = 60, main = expression("ACF of " ~ U[t]^0.4646))
+pacf(electricity.bc, lag.max = 60, main = expression("PACF of " ~ U[t]^0.4646))
+```
+
+In the ACF plot, we can confirm trend is present as the autocorrelations are slowly decaying. Additionally, there is a wave like patterns which confirms seasonality is present. 
+
+```{r}
+op <- par(mfrow = c(1,2))
+acf(data.bc)
+pacf(data.bc)
+```
+
+```{r}
+y1 <- diff(data.bc, 12)
+plot(y1, main = "De-trended Time Series")
+```
+
+```{r}
+op <- par(mfrow = c(1,2))
+acf(y1, lag.max = 60)
+pacf(y1, lag.max = 60)
+```
+
+```{r}
+y2 <- diff(y1, 1)
+plot(y2, main = "De-seasonalized Time Series")
+```
+
+```{r}
+op <- par(mfrow = c(1,2))
+acf(y2, lag.max = 60)
+pacf(y2, lag.max = 60)
+```
+```{r}
+#SARIMA(1,1,1)(1,1,1)
+arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(1,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(1,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, NA, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, NA, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(1,1,1)(1,1,2)
+arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, NA, NA, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, NA, NA, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(1,1,1)(2,1,1)
+arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, NA, 0, NA, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, NA, 0, NA, NA), method = "ML"))
+```
+```{r}
+#SARIMA(1,1,1)(2,1,2)
+arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(2,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(2,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, NA, NA, NA, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, NA, NA, NA, NA), method = "ML"))
+```
+
+
+```{r}
+#SARIMA(1,1,2)(1,1,1)
+arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(1,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(1,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, NA, 0, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, NA, 0, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(1,1,2)(1,1,2)
+arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(1,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(1,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, NA, 0, NA, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, NA, 0, NA, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(1,1,2)(2,1,1)
+arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, NA, 0, 0, NA, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, NA, 0, 0, NA, NA), method = "ML"))
+```
+```{r}
+#SARIMA(1,1,2)(2,1,2)
+arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(2,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(2,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, NA, 0, NA, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(1,1,2), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, NA, 0, NA, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,1)(1,1,1)
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, 0, NA, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, 0, NA, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,1)(1,1,2)
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, 0, NA, NA, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, 0, NA, NA, 0, NA), method = "ML"))
+```
+```{r}
+#SARIMA(2,1,1)(2,1,1)
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, NA, 0, NA, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, NA, 0, NA, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,1)(2,1,2)
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, 0, NA, NA, NA, NA, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, 0, NA, NA, NA, NA, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,2)(1,1,1)
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,1), period = 12), fixed = c(0, 0, 0, 0, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,1), period = 12), fixed = c(0, 0, 0, 0, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,2)(1,1,2)
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,2), period = 12), fixed = c(0, 0, 0, 0, 0, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,2), period = 12), fixed = c(0, 0, 0, 0, 0, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,2)(2,1,1)
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,1), period = 12), fixed = c(0, 0, 0, 0, 0, NA, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,1), period = 12), fixed = c(0, 0, 0, 0, 0, NA, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,2)(2,1,2)
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,2), period = 12), fixed = c(0, 0, 0, 0, 0, NA, NA, 0), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,2), period = 12), fixed = c(0, 0, 0, 0, 0, NA, NA, 0), method = "ML"))
+```
+
+```{r}
+#217.9337
+plot.roots(NULL, polyroot(c(1, -1.2784)), main = "(A) roots of SMA part")
+```
+
+```{r}
+#215.5285
+plot.roots(NULL, polyroot(c(1, -0.7079)), main = "(B) roots of SAR part")
+plot.roots(NULL, polyroot(c(1, 0, -0.6197)), main = "(B) roots of SMA part")
+```
+
+```{r}
+#209.3824 out
+plot.roots(NULL, polyroot(c(1, 0, -0.1961)), main = "(C) roots of SAR Part")
+plot.roots(NULL, polyroot(c(1, -1.3898)), main = "(C) roots of SMA part")
+```
+
+
+```{r}
+plot.roots(NULL, polyroot(c(1, -0.5178)), main = "(A) roots of AR part")
+plot.roots(NULL, polyroot(c(1, 0, 0.1839)), main = "(A) roots of SAR Part")
+plot.roots(NULL, polyroot(c(1, -0.9323)), main = "(A) roots of MA part")
+plot.roots(NULL, polyroot(c(1, -0.7021)), main = "(A) roots of SMA part")
+```
+
+
+```{r}
+plot.roots(NULL, polyroot(c(1, -0.5141)), main = "(B) roots of AR part")
+plot.roots(NULL, polyroot(c(1, 0.6958)), main = "(B) roots of SAR Part")
+plot.roots(NULL, polyroot(c(1, -0.9338)), main = "(B) roots of MA part")
+plot.roots(NULL, polyroot(c(1, 0, -0.5828)), main = "(B) roots of SMA part")
+```
+
+```{r}
+plot.roots(NULL, polyroot(c(1, -0.5141)), main = "(C) roots of AR part")
+plot.roots(NULL, polyroot(c(1, 0.6959)), main = "(C) roots of SAR Part")
+plot.roots(NULL, polyroot(c(1, -1.0709)), main = "(C) roots of MA part")
+plot.roots(NULL, polyroot(c(1, 0, -0.5829)), main = "(C) roots of SMA part")
+```
+
+```{r}
+res_C <- residuals(fit_C)
+par(mfrow = c(2,2))
+hist(res_C, density = 20, breaks = 20, col = "blue", prob = TRUE, main = "Histogram of Residuals of Model")
+
+m_C <- mean(res_C)
+std_C <- sqrt(var(res_C))
+curve(dnorm(x, m_C, std_C), add = TRUE)
+
+plot.ts(res_C, ylab = "Residuals of Model", main = "Residuals Plot of Model")
+fit_C <- lm(res_C ~ as.numeric(1:length(res)))
+
+abline(fit_C, col = 'red')
+abline(h = mean(res_C), col = "blue")
+qqnorm(res_C, main = "Normal Q-Q Plot for Model")
+qqline(res_C, col = "blue")
+```
+
+```{r}
+acf(res_C)
+pacf(res_C)
+```
+
+```{r}
+shapiro.test(res_C)
+Box.test(res_C, lag = 12, type = c("Box-Pierce"), fitdf = 5)
+Box.test(res_C, lag = 12, type = c("Ljung-Box"), fitdf = 5)
+Box.test((res_C)^2, lag = 12, type = c("Ljung-Box"), fitdf = 0)
+ar(res_C, aic = TRUE, order.max = NULL, method = c("yule-walker"))
+```
+
+```{r}
+res_B <- residuals(fit_B)
+par(mfrow = c(2,2))
+hist(res_B, density = 20, breaks = 20, col = "blue", prob = TRUE, main = "Histogram of Residuals of Model")
+
+m_B <- mean(res_B)
+std_B <- sqrt(var(res_B))
+curve(dnorm(x, m_B, std_B), add = TRUE)
+
+plot.ts(res_B, ylab = "Residuals of Model", main = "Residuals Plot of Model")
+fitt <- lm(res_B ~ as.numeric(1:length(res_B)))
+
+abline(fitt, col = 'red')
+abline(h = mean(res_B), col = "blue")
+qqnorm(res_B, main = "Normal Q-Q Plot for Model")
+qqline(res_B, col = "blue")
+```
+```{r}
+acf(res_B)
+pacf(res_B)
+```
+```{r}
+shapiro.test(res_B)
+Box.test(res_B, lag = 12, type = c("Box-Pierce"), fitdf = 5)
+Box.test(res_B, lag = 12, type = c("Ljung-Box"), fitdf = 5)
+Box.test((res_B)^2, lag = 12, type = c("Ljung-Box"), fitdf = 0)
+ar(res_B, aic = TRUE, order.max = NULL, method = c("yule-walker"))
+```
+
+```{r}
+electricity_train1 = ts_electric[1:336]
+
+#creating testing set
+electricity_test1 = ts_electric[337:398]
+
+t = 1:length(electricity_train1)
+
+#using boxcox to create the transformation
+bcTransform1 = boxcox(electricity_train1 ~ t, plotit = TRUE)
+
+#creating lambda from the transformation
+lambda = bcTransform1$x[which(bcTransform1$y == max(bcTransform1$y))]
+
+
+electricity.bc1 = (1/lambda)*(electricity_train1^lambda-1)
+```
+
+```{r}
+#SARIMA(1,1,1)(1,1,2)
+arima(electricity.bc1, order = c(1,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc1, order = c(1,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML"))
+arima(electricity.bc1, order = c(1,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, NA, NA, 0, NA), method = "ML")
+AICc(arima(electricity.bc1, order = c(1,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, NA, NA, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,1)(1,1,2)
+arima(electricity.bc1, order = c(2,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc1, order = c(2,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML"))
+arima(electricity.bc1, order = c(2,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, NA, NA, 0, NA, NA), method = "ML")
+AICc(arima(electricity.bc1, order = c(2,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, NA, NA, 0, NA, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(1,1,1)(1,1,2)
+op <- par(mfrow = c(2,2))
+plot.roots(NULL, polyroot(c(1, -0.5178)), main = "(A) roots of AR part")
+plot.roots(NULL, polyroot(c(1, 0.6958)), main = "(A) roots of SAR part")
+plot.roots(NULL, polyroot(c(1, -0.9338)), main = "(A) roots of MA part")
+plot.roots(NULL, polyroot(c(1, -0.5828)), main = "(A) roots of SMA part")
+```
+
+```{r}
+#SARIMA(2,1,1)(2,1,1)
+op <- par(mfrow = c(2,2))
+plot.roots(NULL, polyroot(c(1, -0.5178)), main = "(A) roots of AR part")
+plot.roots(NULL, polyroot(c(1, 0.1839)), main = "(A) roots of SAR part")
+plot.roots(NULL, polyroot(c(1, -0.9323)), main = "(A) roots of MA part")
+plot.roots(NULL, polyroot(c(1, -0.7021)), main = "(A) roots of SMA part")
+```
+
+```{r}
+#SARIMA(2,1,1)(1,1,2)
+op <- par(mfrow = c(2,2))
+plot.roots(NULL, polyroot(c(1, -0.5141)), main = "(A) roots of AR part")
+plot.roots(NULL, polyroot(c(1, 0.6959)), main = "(A) roots of SAR part")
+plot.roots(NULL, polyroot(c(1, -0.0709)), main = "(A) roots of MA part")
+plot.roots(NULL, polyroot(c(1, -0.5829)), main = "(A) roots of SMA part")
+```
+
+```{r}
+fit_A1 <- arima(electricity.bc1, order = c(1,1,1), seasonal = list(order = c(1,1,2), period = 12), 
+               method = "ML") #5
+fit_B1 <- arima(electricity.bc1, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), 
+               method = "ML") #5
+fit_C1 <- arima(electricity.bc1, order = c(2,1,2), seasonal = list(order = c(1,1,2), period = 12), 
+               method = "ML") #6
+```
+
+```{r}
+res_A1 <- residuals(fit_A1)
+par(mfrow = c(2,2))
+hist(res_A1, density = 20, breaks = 20, col = "blue", prob = TRUE, 
+     main = "Histogram of Residuals of Model A")
+
+m_A1 <- mean(res_A1)
+std_A1 <- sqrt(var(res_A1))
+curve(dnorm(x, m_A1, std_A1), add = TRUE)
+
+plot.ts(res_A1, ylab = "Residuals of Model A", 
+        main = "Residuals Plot of Model A")
+fitt1 <- lm(res_A1 ~ as.numeric(1:length(res_A1)))
+
+abline(fitt1, col = 'red')
+abline(h = mean(res_A1), col = "blue")
+qqnorm(res_A1, main = "Normal Q-Q Plot for Model A")
+qqline(res_A1, col = "blue")
+```
+```{r}
+acf(res_A1, lag.max = 60, main = "ACF of Residuals of Model A")
+pacf(res_A1, lag.max = 60, main = "PACF of Residuals of Model A")
+```
+```{r}
+shapiro.test(res_A1)
+
+#Box-Pierce test on residuals of Model A
+Box.test(res_A1, lag = 12, type = c("Box-Pierce"), fitdf = 5)
+
+#Ljung-Box test on residuals of Model A
+Box.test(res_A1, lag = 12, type = c("Ljung-Box"), fitdf = 5)
+
+#Ljung-Box test on residuals of Model A
+Box.test((res_A1)^2, lag = 12, type = c("Ljung-Box"), fitdf = 0)
+
+ar(res_A1, aic = TRUE, order.max = NULL, method = c("yule-walker"))
+```
+
+```{r}
+res_B1 <- residuals(fit_B1)
+par(mfrow = c(2,2))
+hist(res_B1, density = 20, breaks = 20, col = "blue", prob = TRUE, 
+     main = "Histogram of Residuals of Model A")
+
+m_B1 <- mean(res_B1)
+std_B1 <- sqrt(var(res_B1))
+curve(dnorm(x, m_B1, std_B1), add = TRUE)
+
+plot.ts(res_B1, ylab = "Residuals of Model A", 
+        main = "Residuals Plot of Model A")
+fitt2 <- lm(res_B1 ~ as.numeric(1:length(res_B1)))
+
+abline(fitt2, col = 'red')
+abline(h = mean(res_B1), col = "blue")
+qqnorm(res_B1, main = "Normal Q-Q Plot for Model A")
+qqline(res_B1, col = "blue")
+```
+```{r}
+acf(res_B1, lag.max = 60, main = "ACF of Residuals of Model A")
+pacf(res_B1, lag.max = 60, main = "PACF of Residuals of Model A")
+
+shapiro.test(res_B1)
+
+#Box-Pierce test on residuals of Model A
+Box.test(res_B1, lag = 12, type = c("Box-Pierce"), fitdf = 5)
+
+#Ljung-Box test on residuals of Model A
+Box.test(res_B1, lag = 12, type = c("Ljung-Box"), fitdf = 5)
+
+#Ljung-Box test on residuals of Model A
+Box.test((res_B1)^2, lag = 12, type = c("Ljung-Box"), fitdf = 0)
+
+ar(res_B1, aic = TRUE, order.max = NULL, method = c("yule-walker"))
+```
+
+```{r}
+res_C1 <- residuals(fit_C1)
+par(mfrow = c(2,2))
+hist(res_C1, density = 20, breaks = 20, col = "blue", prob = TRUE, 
+     main = "Histogram of Residuals of Model C")
+
+m_C1 <- mean(res_C1)
+std_C1 <- sqrt(var(res_C1))
+curve(dnorm(x, m_C1, std_C1), add = TRUE)
+
+plot.ts(res_C1, ylab = "Residuals of Model C", 
+        main = "Residuals Plot of Model C")
+fitt3 <- lm(res_C1 ~ as.numeric(1:length(res_C1)))
+
+abline(fitt3, col = 'red')
+abline(h = mean(res_C1), col = "blue")
+qqnorm(res_C1, main = "Normal Q-Q Plot for Model C")
+qqline(res_C1, col = "blue")
+```
+
+```{r}
+acf(res_C1, lag.max = 60, main = "ACF of Residuals of Model A")
+pacf(res_C1, lag.max = 60, main = "PACF of Residuals of Model A")
+
+shapiro.test(res_C1)
+
+#Box-Pierce test on residuals of Model A
+Box.test(res_C1, lag = 12, type = c("Box-Pierce"), fitdf = 5)
+
+#Ljung-Box test on residuals of Model A
+Box.test(res_C1, lag = 12, type = c("Ljung-Box"), fitdf = 5)
+
+#Ljung-Box test on residuals of Model A
+Box.test((res_C1)^2, lag = 12, type = c("Ljung-Box"), fitdf = 0)
+
+ar(res_C1, aic = TRUE, order.max = NULL, method = c("yule-walker"))
+```
+
+```{r}
+#SARIMA(2,1,1)(1,1,1)
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, 0, NA, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, 0, NA, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,1)(1,1,2)
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, 0, NA, NA, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, 0, NA, NA, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,1)(2,1,1)
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, NA, 0, NA, NA))
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, NA, 0, NA, NA)))
+```
+
+```{r}
+#SARIMA(2,1,1)(2,1,2)
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, 0, NA, NA, NA, NA, NA))
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, 0, NA, NA, NA, NA, NA)))
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, 0, NA, 0, NA, NA, NA))
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, 0, 0, NA, NA, NA, NA)))
+```
+
+```{r}
+#SARIMA(2,1,2)(1,1,1)
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,1), period = 12), fixed = c(0, 0, 0, 0, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,1), period = 12), fixed = c(0, 0, 0, 0, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,2)(1,1,2)
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,2), period = 12), fixed = c(0, 0, 0, 0, 0, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(1,1,2), period = 12), fixed = c(0, 0, 0, 0, 0, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,2)(2,1,1)
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,1), period = 12), fixed = c(0, 0, 0, 0, 0, NA, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,1), period = 12), fixed = c(0, 0, 0, 0, 0, NA, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,2)(2,1,2)
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,2), period = 12))
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,2), period = 12)))
+arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,2), period = 12), fixed = c(0, 0, 0, 0, 0, NA, NA, 0), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,2), seasonal = list(order = c(2,1,2), period = 12), fixed = c(0, 0, 0, 0, 0, NA, NA, 0), method = "ML"))
+```
+
+```{r}
+#SARIMA(4,1,1)(1,1,1)
+arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(1,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(1,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, 0, 0, 0, NA, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, 0, 0, 0, NA, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(4,1,1)(1,1,2)
+arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, 0, 0, 0, NA, 0, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, 0, 0, 0, NA, 0, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(4,1,1)(2,1,1)
+arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, 0, 0, NA, 0, NA, NA))
+AICc(arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, 0, 0, NA, 0, NA, NA)))
+```
+
+```{r}
+#SARIMA(4,1,1)(2,1,2)
+arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(2,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(2,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, 0, 0, 0, NA, 0, NA, NA, 0))
+AICc(arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, 0, 0, 0, NA, 0, NA, NA, 0)))
+```
+
+```{r}
+#SARIMA(4,1,2)(1,1,1)
+arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(1,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(1,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(1,1,1), period = 12), fixed = c(0, 0, 0, 0, NA, 0, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(1,1,1), period = 12), fixed = c(0, 0, 0, 0, NA, 0, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(4,1,2)(1,1,2)
+arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(1,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(1,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(1,1,2), period = 12), fixed = c(0, 0, 0, 0, 0, 0, 0, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(1,1,2), period = 12), fixed = c(0, 0, 0, 0, 0, 0, 0, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(4,1,2)(2,1,1)
+arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(2,1,1), period = 12), fixed = c(0, 0, 0, 0, 0, 0, 0, NA, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(2,1,1), period = 12), fixed = c(0, 0, 0, 0, 0, 0, 0, NA, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(4,1,2)(2,1,2)
+arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(2,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(2,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(2,1,2), period = 12), fixed = c(0, 0, 0, 0, 0, 0, 0, NA, NA, 0), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,2), seasonal = list(order = c(2,1,2), period = 12), fixed = c(0, 0, 0, 0, 0, 0, 0, NA, NA, 0), method = "ML"))
+```
+
+```{r}
+#SARIMA(5,1,1)(1,1,1)
+arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(1,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(1,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, 0, 0, 0, 0, NA, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, 0, 0, 0, 0, NA, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(5,1,1)(1,1,2)
+arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(1,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, 0, 0, 0, 0, NA, 0, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, 0, 0, 0, 0, NA, 0, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(5,1,1)(2,1,1)
+arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, 0, 0, 0, NA, 0, NA, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, 0, 0, 0, NA, 0, NA, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(5,1,1)(2,1,2)
+arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(2,1,2), period = 12))
+AICc(arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(2,1,2), period = 12)))
+arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, 0, 0, 0, 0, NA, 0, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, 0, 0, 0, 0, NA, 0, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(5,1,2)(1,1,1)
+arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(1,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(1,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, NA, 0, 0, 0, 0, NA, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(1,1,1), period = 12), fixed = c(NA, NA, 0, 0, 0, 0, NA, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(5,1,2)(1,1,2)
+arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(1,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(1,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, NA, 0, 0, 0, 0, NA, 0, 0, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(1,1,2), period = 12), fixed = c(NA, NA, 0, 0, 0, 0, NA, 0, 0, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(5,1,2)(2,1,1)
+arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, NA, 0, 0, 0, 0, NA, 0, NA, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, NA, 0, 0, 0, 0, NA, 0, NA, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(5,1,2)(2,1,2)
+arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(2,1,2), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(2,1,2), period = 12), method = "ML"))
+arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, NA, 0, 0, 0, 0, NA, 0, NA, NA, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,2), seasonal = list(order = c(2,1,2), period = 12), fixed = c(NA, NA, 0, 0, 0, 0, NA, 0, NA, NA, NA), method = "ML"))
+```
+
+```{r}
+#SARIMA(2,1,1)(2,1,1)
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, NA, 0, NA, NA))
+AICc(arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, NA, 0, NA, NA)))
+#SARIMA(4,1,1)(2,1,1)
+arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, 0, 0, NA, 0, NA, NA))
+AICc(arima(electricity.bc, order = c(4,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, 0, 0, NA, 0, NA, NA)))
+#SARIMA(5,1,1)(2,1,1)
+arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(2,1,1), period = 12), method = "ML"))
+arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, 0, 0, 0, NA, 0, NA, NA), method = "ML")
+AICc(arima(electricity.bc, order = c(5,1,1), seasonal = list(order = c(2,1,1), period = 12), fixed = c(NA, 0, 0, 0, 0, NA, 0, NA, NA), method = "ML"))
+```
+```{r}
+op <- par(mfrow = c(2,2))
+plot.roots(NULL, polyroot(c(1, -0.5178)), main = "(A) roots of AR part")
+plot.roots(NULL, polyroot(c(1, 0, 0.1786)), main = "(A) roots of SAR part")
+plot.roots(NULL, polyroot(c(1, -0.9360)), main = "(A) roots of MA part")
+plot.roots(NULL, polyroot(c(1, 0, -0.7181)), main = "(A) roots of SMA part")
+
+op <- par(mfrow = c(2,2))
+plot.roots(NULL, polyroot(c(1, -0.5177)), main = "(B) roots of AR part")
+plot.roots(NULL, polyroot(c(1, 0, 0.1787)), main = "(B) roots of SAR part")
+plot.roots(NULL, polyroot(c(1, 0, -0.9360)), main = "(B) roots of MA part")
+plot.roots(NULL, polyroot(c(1, 0, -0.7181)), main = "(B) roots of SMA part")
+
+op <- par(mfrow = c(2,2))
+plot.roots(NULL, polyroot(c(1, -0.5177)), main = "(C) roots of AR part")
+plot.roots(NULL, polyroot(c(1, 0, 0.1786)), main = "(C) roots of SAR part")
+plot.roots(NULL, polyroot(c(1, -1.0683)), main = "(C) roots of MA part")
+plot.roots(NULL, polyroot(c(1, 0, -0.7181)), main = "(C) roots of SMA part")
+```
+
+```{r, warning=FALSE}
+fit_A_ <- arima(electricity.bc, order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), 
+                fixed = c(NA, 0, NA, 0, NA, NA))
+fit_B_ <- arima(electricity.bc, , order = c(4,1,1), seasonal = list(order = c(2,1,1), period = 12),
+                fixed = c(NA, 0, 0, 0, NA, 0, NA, NA)) #10
+fit_C_ <- arima(electricity.bc, , order = c(5,1,1), seasonal = list(order = c(2,1,1), period = 12), 
+               method = "ML", fixed = c(NA, 0, 0, 0, 0, NA, 0, NA, NA)) #9
+```
+
